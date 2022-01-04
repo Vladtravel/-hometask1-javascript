@@ -1,0 +1,62 @@
+[
+  {
+    "id": "1",
+    "icon": "/images/cart.png",
+    "name": "Shopping list",
+    "category": "Task",
+    "created": "January 03, 2022",
+    "сontent": "Tomatoes, bread",
+    "dates": [],
+    "isActive": "true"
+  },
+  {
+    "id": "2",
+    "icon": "/cart.6b493076.png",
+    "name": "The theory of evolution",
+    "category": "Random Thought",
+    "created": "January 03, 2022",
+    "сontent": "The evolution...",
+    "dates": ["4/01/2022, 10/01/2022"],
+    "isActive": "true"
+  },
+  {
+    "id": "3",
+    "icon": "./images/cart.png",
+    "name": "New Feature",
+    "category": "Idea",
+    "created": "January 03, 2022",
+    "сontent": "Implement new",
+    "dates": [],
+    "isActive": "true"
+  },
+  {
+    "id": "4",
+    "icon": "./images/cart.png",
+    "name": "William Gaddis",
+    "category": "Quote",
+    "created": "January 03, 2022",
+    "сontent": "Power doesn't co...",
+    "dates": [],
+    "isActive": "true"
+  },
+  {
+    "id": "5",
+    "icon": "./images/cart.png",
+    "name": "William Gaddis",
+    "category": "Quote",
+    "created": "January 03, 2022",
+    "сontent": "Power doesn't co...",
+    "dates": [],
+    "isActive": "false"
+  },
+  {
+    "id": "6",
+    "icon": "./images/cart.png",
+    "name": "William Gaddis",
+    "category": "Quote",
+    "created": "January 03, 2022",
+    "сontent": "Power doesn't co...",
+    "dates": [],
+    "isActive": "false"
+  }
+]
