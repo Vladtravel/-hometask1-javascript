@@ -1,14 +1,10 @@
 import './sass/main.scss';
-import cart from './images/cart.png';
-import head from './images/head.png';
-import lamp from './images/lamp.png';
-import quotes from './images/quotes.png';
-import pencil from './images/pencil.png';
-import archive from './images/archive.png';
-import bin from './images/bin.png';
-
+import { categoryNotesMarkupEl, notesMarkupEl, archivedNotesMarkupEl } from './render';
 import notes from './notes.json';
+
 const shortid = require('shortid');
+const activeNotes = [];
+const archivedNotes = [];
 
 let editNoteId;
 let taskActiveEl = [];
@@ -20,21 +16,6 @@ let ideaArchiivedEl = [];
 let quoteActiveEl = [];
 let quoteArchiivedEl = [];
 let on = 'true';
-
-const activeNotes = [];
-const archivedNotes = [];
-
-sortNotesByStatus(notes);
-
-function sortNotesByStatus(notes) {
-  notes.map(el => {
-    if (el.isActive === 'true') {
-      activeNotes.push(el);
-    } else {
-      archivedNotes.push(el);
-    }
-  });
-}
 
 const refs = {
   tbodyEl: document.querySelector('tbody'),
@@ -49,10 +30,24 @@ refs.createBtn.addEventListener('click', onCreateClick);
 refs.tbodyEl.addEventListener('click', onFormClick);
 window.addEventListener('click', onClick);
 
+sortNotesByStatus(notes);
+
+function sortNotesByStatus(notes) {
+  notes.map(el => {
+    if (el.isActive === 'true') {
+      activeNotes.push(el);
+    } else {
+      archivedNotes.push(el);
+    }
+  });
+}
+
 const notesMarkup = notesMarkupEl(activeNotes);
-refs.tbodyEl.insertAdjacentHTML('beforeend', notesMarkup);
+
+renderActiveNotes(notesMarkup);
 
 sortByCategories(activeNotes, archivedNotes);
+
 function sortByCategories(activeNotes, archivedNotes) {
   const notesArr = [...activeNotes, ...archivedNotes];
   const uniq = notesArr
@@ -99,22 +94,26 @@ function sortByCategories(activeNotes, archivedNotes) {
     }
   });
 
-  refs.categoryEl.innerHTML = '';
-  const notesMarkup = categoryNotesMarkupEl(uniq);
-  refs.categoryEl.insertAdjacentHTML('beforeend', notesMarkup);
+  const notesMarkup = categoryNotesMarkupEl(
+    uniq,
+    editNoteId,
+    taskActiveEl,
+    taskArchiivedEl,
+    randomeActiveEl,
+    randomeArchiivedEl,
+    ideaActiveEl,
+    ideaArchiivedEl,
+    quoteActiveEl,
+    quoteArchiivedEl,
+  );
+
+  renderCategories(notesMarkup);
 }
 
 function onFormSubmit(e) {
   e.preventDefault();
 
-  taskActiveEl = [];
-  taskArchiivedEl = [];
-  randomeActiveEl = [];
-  randomeArchiivedEl = [];
-  ideaActiveEl = [];
-  ideaArchiivedEl = [];
-  quoteActiveEl = [];
-  quoteArchiivedEl = [];
+  makeEmptyAllArr();
 
   if (!editNoteId) {
     activeNotes.push({
@@ -123,7 +122,9 @@ function onFormSubmit(e) {
       category: e.target[1].value,
       created: new Date().toLocaleDateString(),
       сontent: e.target[2].value,
-      dates: [e.target[3].value.split('-').reverse().join('/')],
+      dates: e.target[2].value.match(/\b\d+.|\/|-\d+.|\/|-\d+\b/g)
+        ? [e.target[2].value.match(/\b\d+.|\/|-\d+.|\/|-\d+\b/g).join('')]
+        : [],
       isActive: 'true',
     });
   }
@@ -133,55 +134,21 @@ function onFormSubmit(e) {
       el.name = document.getElementById('fname').value;
       el.category = document.getElementById('category').value;
       el.сontent = document.getElementById('сontent').value;
-      el.dates.push(document.getElementById('dates').value.split('-').reverse().join('/'));
+      const categDateValue = document
+        .getElementById('сontent')
+        .value.match(/\b\d+.|\/|-\d+.|\/|-\d+\b/g);
+
+      if (categDateValue) {
+        el.dates.push(categDateValue.join(''));
+      }
     }
   });
+
   const newNotesMarkup = notesMarkupEl(activeNotes);
-  refs.tbodyEl.innerHTML = '';
-  refs.tbodyEl.insertAdjacentHTML('beforeend', newNotesMarkup);
-  refs.modal.classList.remove('isOpen');
+
+  renderActiveNotes(newNotesMarkup);
 
   sortByCategories(activeNotes, archivedNotes);
-}
-
-function notesMarkupEl(data) {
-  let noteName = '';
-
-  const btnSub = document.getElementById('sbtBtn');
-  btnSub.classList.remove('isHidden');
-
-  return data
-    .map(el => {
-      switch (el.category) {
-        case 'Task':
-          noteName = cart;
-          break;
-        case 'Random Thought':
-          noteName = head;
-          break;
-        case 'Idea':
-          noteName = lamp;
-          break;
-        case 'Quote':
-          noteName = quotes;
-          break;
-        default:
-          noteName = cart;
-          break;
-      }
-      return `<tr id="${el.id}" class='active'>
-  <td><img class="noteIcon" src='${noteName}' alt='noteName' width='30' height='30' /></td>
-  <td>${el.name}</td>
-  <td>${el.created}</td>
-  <td>${el.category}</td>
-  <td>${el.сontent}</td>
-  <td>${el.dates}</td>
-  <td><img  src='${pencil}' alt='pencil' width='30' height='30' /></td>
-  <td><img  src='${archive}' alt='archive' width='30' height='30' /></td>
-  <td><img  src="${bin}" alt='bin' width='30' height='30' /></td>
-</tr>`;
-    })
-    .join('');
 }
 
 function onCreateClick() {
@@ -221,14 +188,7 @@ function onEditNote(e) {
 }
 
 function onArchiveNote(e) {
-  taskActiveEl = [];
-  taskArchiivedEl = [];
-  randomeActiveEl = [];
-  randomeArchiivedEl = [];
-  ideaActiveEl = [];
-  ideaArchiivedEl = [];
-  quoteActiveEl = [];
-  quoteArchiivedEl = [];
+  makeEmptyAllArr();
 
   if (e.className === 'active') {
     activeNotes.forEach((el, index) => {
@@ -238,9 +198,8 @@ function onArchiveNote(e) {
           archivedNotes.push(el);
           activeNotes.splice(index, 1);
 
-          refs.tbodyEl.innerHTML = '';
           const notesMarkup = notesMarkupEl(activeNotes);
-          refs.tbodyEl.insertAdjacentHTML('beforeend', notesMarkup);
+          renderActiveNotes(notesMarkup);
         }
       }
     });
@@ -254,9 +213,8 @@ function onArchiveNote(e) {
           activeNotes.push(el);
           archivedNotes.splice(index, 1);
 
-          refs.tbodyEl.innerHTML = '';
           const notesMarkup = archivedNotesMarkupEl(archivedNotes);
-          refs.tbodyEl.insertAdjacentHTML('beforeend', notesMarkup);
+          renderActiveNotes(notesMarkup);
         }
       }
     });
@@ -265,22 +223,14 @@ function onArchiveNote(e) {
 }
 
 function onRemoveNote({ id }) {
-  taskActiveEl = [];
-  taskArchiivedEl = [];
-  randomeActiveEl = [];
-  randomeArchiivedEl = [];
-  ideaActiveEl = [];
-  ideaArchiivedEl = [];
-  quoteActiveEl = [];
-  quoteArchiivedEl = [];
+  makeEmptyAllArr();
 
   const index = activeNotes.findIndex(el => el.id === id);
   if (index !== -1) {
     activeNotes.splice(index, 1);
   }
   const delNotes = notesMarkupEl(activeNotes);
-  refs.tbodyEl.innerHTML = '';
-  refs.tbodyEl.insertAdjacentHTML('beforeend', delNotes);
+  renderActiveNotes(delNotes);
 
   sortByCategories(activeNotes, archivedNotes);
 }
@@ -298,99 +248,40 @@ function onCloseModal(e) {
   refs.modal.classList.remove('isOpen');
 }
 
+function renderCategories(notesMarkup) {
+  refs.categoryEl.innerHTML = '';
+  refs.categoryEl.insertAdjacentHTML('beforeend', notesMarkup);
+}
+
 function onArchiveRender(e) {
   on = 'false';
   const btnSub = document.getElementById('sbtBtn');
   btnSub.classList.add('isHidden');
 
-  refs.tbodyEl.innerHTML = '';
   const notesMarkup = archivedNotesMarkupEl(archivedNotes);
-  refs.tbodyEl.insertAdjacentHTML('beforeend', notesMarkup);
+  renderActiveNotes(notesMarkup);
 }
 
 function onActiveRender(e) {
   on = 'true';
-  refs.tbodyEl.innerHTML = '';
+
   const notesMarkup = notesMarkupEl(activeNotes);
-  refs.tbodyEl.insertAdjacentHTML('beforeend', notesMarkup);
+  renderActiveNotes(notesMarkup);
 }
 
-function archivedNotesMarkupEl(data) {
-  let noteName = '';
-  return data
-    .map(el => {
-      switch (el.category) {
-        case 'Task':
-          noteName = cart;
-          break;
-        case 'Random Thought':
-          noteName = head;
-          break;
-        case 'Idea':
-          noteName = lamp;
-          break;
-        case 'Quote':
-          noteName = quotes;
-          break;
-        default:
-          noteName = cart;
-          break;
-      }
-      return `<tr id="${el.id}" class='archived'>
-  <td><img class="noteIcon" src='${noteName}' alt='noteName' width='30' height='30' /></td>
-  <td>${el.name}</td>
-  <td>${el.created}</td>
-  <td>${el.category}</td>
-  <td>${el.сontent}</td>
-  <td>${el.dates}</td>
-  <td><img  src='${pencil}' alt='pencil' width='30' height='30' /></td>
-  <td><img  src='${archive}' alt='archive' width='30' height='30' />Archived</td>
-  <td><img  src="${bin}" alt='bin' width='30' height='30' /></td>
-</tr>`;
-    })
-    .join('');
+function renderActiveNotes(newNotesMarkup) {
+  refs.tbodyEl.innerHTML = '';
+  refs.tbodyEl.insertAdjacentHTML('beforeend', newNotesMarkup);
+  refs.modal.classList.remove('isOpen');
 }
 
-function categoryNotesMarkupEl(data) {
-  let noteName = '';
-  let activeEl = '';
-  let archivedEl = '';
-
-  return data
-    .map(el => {
-      switch (el) {
-        case 'Task':
-          noteName = cart;
-          activeEl = taskActiveEl.length;
-          archivedEl = taskArchiivedEl.length;
-          break;
-        case 'Random Thought':
-          noteName = head;
-          activeEl = randomeActiveEl.length;
-          archivedEl = randomeArchiivedEl.length;
-          break;
-        case 'Idea':
-          noteName = lamp;
-          activeEl = ideaActiveEl.length;
-          archivedEl = ideaArchiivedEl.length;
-          break;
-        case 'Quote':
-          noteName = quotes;
-          activeEl = quoteActiveEl.length;
-          archivedEl = quoteArchiivedEl.length;
-          break;
-        default:
-          noteName = cart;
-          break;
-      }
-      return `<tr id="${el.id}" class='archived'>
-  <td><img class="noteIcon" src='${noteName}' alt='noteName' width='30' height='30' /></td>
-  <td>${el}</td>
-  <td>${activeEl}</td>
-  <td>${archivedEl}</td>
-  
-  
-</tr>`;
-    })
-    .join('');
+function makeEmptyAllArr() {
+  taskActiveEl = [];
+  taskArchiivedEl = [];
+  randomeActiveEl = [];
+  randomeArchiivedEl = [];
+  ideaActiveEl = [];
+  ideaArchiivedEl = [];
+  quoteActiveEl = [];
+  quoteArchiivedEl = [];
 }
